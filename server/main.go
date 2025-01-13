@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"log"
@@ -8,6 +8,10 @@ import (
 var (
 	connections = make([]net.Conn, 0)
 )
+
+func main() {
+	StartServer()
+}
 
 func StartServer() {
 	listener, err := net.Listen("tcp4", "127.0.0.1:5000")
