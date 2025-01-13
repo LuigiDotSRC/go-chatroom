@@ -3,10 +3,12 @@ package main
 import (
 	"log"
 	"net"
+	"sync"
 )
 
 var (
 	connections = make([]net.Conn, 0)
+	mu          sync.Mutex
 )
 
 func main() {
@@ -27,14 +29,17 @@ func StartServer() {
 			log.Printf("Could not accept connection: %v", err)
 			continue
 		}
+
+		mu.Lock()
 		connections = append(connections, conn)
+		mu.Unlock()
+
 		go handler(conn)
 	}
 }
 
 func handler(conn net.Conn) {
 	defer conn.Close()
-	var out []byte = []byte("PONG")
 
 	for {
 		in := make([]byte, 1024)
@@ -44,14 +49,18 @@ func handler(conn net.Conn) {
 			return
 		}
 		if n > 0 {
-			conn.Write(out)
-			broadcast(in)
+			broadcast(in[:n])
 		}
 	}
 }
 
 func broadcast(msg []byte) {
+	mu.Lock()
+	defer mu.Unlock()
 	for _, c := range connections {
-		c.Write(msg)
+		_, err := c.Write(msg)
+		if err != nil {
+			log.Printf("could not broadcast message: %v", err)
+		}
 	}
 }
