@@ -49,6 +49,7 @@ func handler(conn net.Conn) {
 			return
 		}
 		if n > 0 {
+			log.Print(string(in))
 			broadcast(in[:n])
 		}
 	}
